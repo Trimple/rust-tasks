@@ -5,7 +5,8 @@ authors = ["Trimple <andrevdovnar@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-colored = "1.9.3"
+
 
 
 [dependencies]
+colored = "1.9"
