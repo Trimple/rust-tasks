@@ -1,9 +1,9 @@
-mod calculator;
+mod resistor_divider;
 mod simple_numbers;
 
 fn main() {
 
-    calculator::calculate_best_resistors_values(5.0, 0.43)
+    resistor_divider::calculate_resistors_from_voltages(5.0, 0.43);
 
     // *** Simple numbers implementation *** //
 
