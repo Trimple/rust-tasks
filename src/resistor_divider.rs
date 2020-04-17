@@ -93,8 +93,10 @@ pub fn calculate_resistors_from_voltages(input_voltage: f64, output_voltage: f64
 
     if resistance_ratio < 1.0 {
         // calculate_for_r1_smaller_then_r2(&resistance_ratio)
-        println! ("Not ready yet");
-    } else {
+        calculate_for_r1_smaller_then_r2(&resistance_ratio, &input_voltage);
+    } 
+    else
+    {
         calculate_for_r1_bigger_then_r2(&resistance_ratio, &input_voltage);
     }
 
@@ -155,7 +157,7 @@ fn calculate_for_r1_bigger_then_r2(resistance_ratio: &f64, input_voltage: &f64) 
             let current_resistors_ratio = *resistor1 / real_r2_value;
 
             if is_exact_ratio {
-                if (current_resistors_ratio - *resistance_ratio).abs() < 0.00001    // You should not compare floating point units with ==
+                if (current_resistors_ratio - *resistance_ratio).abs() < 0.000001    // You should not compare floating point units with ==
                 {
                     println!("R1: {}  \t R2: {} ", resistor1, real_r2_value);       // Пока если есть точное совпадение, то выводятся все 
 
@@ -171,14 +173,14 @@ fn calculate_for_r1_bigger_then_r2(resistance_ratio: &f64, input_voltage: &f64) 
             else 
             {
                 // Если первое точное совпадение. Потом поменяю то, как конкретно это выводится на экран
-                if (current_resistors_ratio - *resistance_ratio).abs() < 0.00001
+                if (current_resistors_ratio - *resistance_ratio).abs() < 0.000001
                 {
                     println!( "Exact match was found! \nR1: {}  \t R2: {} ", resistor1, real_r2_value);
                     is_exact_ratio = true;
                     break;
                 }
 
-                // Если значение больше номинального надо проверить меньшее отношение и закончить итерацию
+                // Если значение меньше номинального надо проверить меньшее отношение и закончить итерацию
                 if current_resistors_ratio < *resistance_ratio {
                     if *resistance_ratio - current_resistors_ratio < *resistance_ratio - current_smaller_ration {
                         smaller_r1 = *resistor1;
@@ -188,10 +190,12 @@ fn calculate_for_r1_bigger_then_r2(resistance_ratio: &f64, input_voltage: &f64) 
                     break;
                 }
                 
-                bigger_r1 = *resistor1;
-                bigger_r2 = real_r2_value;
-                // current_bigger_ratio = current_resistors_ratio;
-
+                if current_resistors_ratio - *resistance_ratio < current_bigger_ratio - *resistance_ratio
+                {
+                    bigger_r1 = *resistor1;
+                    bigger_r2 = real_r2_value;
+                    current_bigger_ratio = current_resistors_ratio;
+                }
             }
         }
     }
@@ -232,14 +236,14 @@ fn calculate_for_r1_bigger_then_r2(resistance_ratio: &f64, input_voltage: &f64) 
 #[allow(dead_code)]
 fn calculate_for_r1_smaller_then_r2(resistance_ratio: &f64, input_voltage: &f64) {
     // Большее отношение равно 1 при r1 < r2 - отправная точка для уменьшения
-    let mut bigger_r1: f64 = MAXIMUM_ALLOWED_RATIO;
+    let mut bigger_r1: f64 = 1.0;
     let mut bigger_r2: f64 = 1.0;
     let mut current_bigger_ratio = 1.0;
     
     // Меньшее отношение минимальному при r1 > r2 - отправная точка для увеличения.
-    let mut smaller_r1: f64 = 1.0;
+    let mut smaller_r1: f64 = MINIMUM_ALLOWED_RATIO;
     let mut smaller_r2: f64 = 1.0;
-    let mut current_smaller_ration = 1.0;
+    let mut current_smaller_ration = MINIMUM_ALLOWED_RATIO;
 
     // Алгоритм вычисления при точном совпадении отличается от алгоритма без совппадения, соответствено нужен флаг
     let mut is_exact_ratio = false;
@@ -251,41 +255,45 @@ fn calculate_for_r1_smaller_then_r2(resistance_ratio: &f64, input_voltage: &f64)
     // Некий способ оптимизации алгоритма если разница между значениями довольно большая, однако на самом деле данны метд дает не столько
     // серьезное улучшение итогового результата, сколько серьезное улучшение вычислительной нагрузки, может быть удалю со временем.
     let mut range_divider = 1.0;
-    if *resistance_ratio > 20.0{
+    if *resistance_ratio < 0.05
+    {
         range_divider = 10.0;
     }
 
-    for resistor1 in E96_VALUES.iter().rev() {
+    for resistor2 in E96_VALUES.iter() 
+    {
         // Для того, чтобы сократить количество операций деления выполняемых алгоритмом будем проводить деление только если сопротивление r2 
         // находится в 2% от нужного. Шаг выбран с оглядкой на точность резисторов - 1%, соответственно резистора подобраны так, чтобы 
         // максимальное значение с учетом погрешности одного резистора по возможности минимально пересекалось с минимальным с учетом погрешности
         // значением следующего. Соответственно интервал в погрешность*2 - хороший шаг для выбора резистора, данный шаг точно обеспечит по крайней 
         // 1 значение для сравнения для 
-        let minimum_r2_value: f64 = *resistor1 / (*resistance_ratio * 1.02);
+        let minimum_r1_value: f64 = *resistor2 * (*resistance_ratio * 0.97);
 
-        for resistor2 in E96_VALUES.iter().rev() {
-            let real_r2_value = resistor2 / range_divider;
+        // println! (" Current r2 value:{}\nMinimum r1 value: {}\n", *resistor2, minimum_r1_value);
+
+        for resistor1 in E96_VALUES.iter() {
+            let real_r1_value = resistor1 / range_divider;
 
             // Если значение резистора меньше, чем значение допустимой зоны - пропускаем значение
-            if real_r2_value < minimum_r2_value {
+            if real_r1_value < minimum_r1_value {
                 number_of_continues += 1;   // Для оценки эффективности алгоритма
                 continue;
             }
             
             number_of_full_algorithm_calls += 1; // Для оценки эффективности алгоритма
 
-            let current_resistors_ratio = *resistor1 / real_r2_value;
+            let current_resistors_ratio = real_r1_value / *resistor2;
 
             if is_exact_ratio {
-                if (current_resistors_ratio - *resistance_ratio).abs() < 0.00001    // You should not compare floating point units with ==
+                if (current_resistors_ratio - *resistance_ratio).abs() < 0.000001    // You should not compare floating point units with ==
                 {
-                    println!("R1: {}  \t R2: {} ", resistor1, real_r2_value);       // Пока если есть точное совпадение, то выводятся все 
+                    println!("R1: {}  \t R2: {} ", real_r1_value, resistor2);       // Пока если есть точное совпадение, то выводятся все 
 
                     // For the same r1 value there is no more r2 values possible, so we break
                     break;
                 }
 
-                if current_resistors_ratio < *resistance_ratio
+                if current_resistors_ratio > *resistance_ratio
                 {
                     break;
                 }
@@ -293,26 +301,29 @@ fn calculate_for_r1_smaller_then_r2(resistance_ratio: &f64, input_voltage: &f64)
             else 
             {
                 // Если первое точное совпадение. Потом поменяю то, как конкретно это выводится на экран
-                if (current_resistors_ratio - *resistance_ratio).abs() < 0.00001
+                if (current_resistors_ratio - *resistance_ratio).abs() < 0.000001
                 {
-                    println!( "Exact match was found! \nR1: {}  \t R2: {} ", resistor1, real_r2_value);
+                    println!( "Exact match was found! \nR1: {}  \t R2: {} ", real_r1_value, resistor2);
                     is_exact_ratio = true;
                     break;
                 }
 
                 // Если значение больше номинального надо проверить меньшее отношение и закончить итерацию
-                if current_resistors_ratio < *resistance_ratio {
-                    if *resistance_ratio - current_resistors_ratio < *resistance_ratio - current_smaller_ration {
-                        smaller_r1 = *resistor1;
-                        smaller_r2 = real_r2_value;
-                        current_smaller_ration = current_resistors_ratio;
+                if current_resistors_ratio > *resistance_ratio {
+                    if current_resistors_ratio - *resistance_ratio < current_bigger_ratio - *resistance_ratio {
+                        bigger_r1 = real_r1_value;
+                        bigger_r2 = *resistor2;
+                        current_bigger_ratio = current_resistors_ratio;
                     }
                     break;
                 }
-                
-                bigger_r1 = *resistor1;
-                bigger_r2 = real_r2_value;
-                // current_bigger_ratio = current_resistors_ratio;
+
+                if *resistance_ratio - current_resistors_ratio < *resistance_ratio - current_smaller_ration
+                {
+                    smaller_r1 = real_r1_value;
+                    smaller_r2 = *resistor2;
+                    current_smaller_ration = current_resistors_ratio;
+                }
 
             }
         }
