@@ -31,16 +31,16 @@ fn main() {
     collections_tasks::console_bot();
 */
     // ****** Simple numbers implementation ****** //
-/*
+
     println!("Simple numbers algorithm:\n");
 
     // First way to solve task
-    let mut vector_of_numbers: Vec<i32> = Vec::new();
-    simple_numbers::find(2000, &mut vector_of_numbers);
+    let mut vector_of_numbers: Vec<u32> = Vec::new();
+    simple_numbers::find(1_000_000, &mut vector_of_numbers);
     simple_numbers::print_from_vector(&vector_of_numbers);
 
     // Second way to solve task
-    simple_numbers::find_integrated(100);
-*/
+    // simple_numbers::find_integrated(100);  
+
     // ************************************* //
 }
